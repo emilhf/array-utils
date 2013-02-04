@@ -18,7 +18,7 @@ Pull the repo, run `lein deps`, and require `array-utils.core`.
 Instead of 
 
 ```clojure
-(defn asum [^doubles ws ^doubles xs]
+(defn dot-product [^doubles ws ^doubles xs]
   (areduce xs i ret 0.0
     (+ ret (* (aget xs i)
               (aget ws i))))
@@ -27,7 +27,7 @@ Instead of
 you can write
 
 ```clojure
-(defn asum [ws xs] (asum [x xs w ws] (* x w)))
+(defn dot-product [ws xs] (asum [x xs w ws] (* x w)))
 ```
 
 See `src/array-utils/example.clj` for more.

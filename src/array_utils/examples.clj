@@ -71,19 +71,22 @@
 
 ;; ## Adding up time
 
-;; (def hours (double-array (repeatedly 10e3 #(rand-int 24))))
-
 ;; Do you hate adding up hours? Not anymore! ~884 us.
 (defn sum-hours
   "Sums up 'metric' hours of time and returns the time."
   [hours]
   (collect #(rem (+ %1 %2) 24.0) 0.0 hours))
 
+(comment
+  (def hours (double-array (repeatedly 10e3 #(rand-int 24))))
+  (sum-hours hours)
+  )
+
 ;; ------------------------
 
 ;; ## Norwegian PINs
 
-;; Three microsconds!
+;; ~1.6 us (quick, long)
 (defn valid-personal-number?
   "Verifies a Norwegian personal number."
   [xs]
@@ -91,6 +94,16 @@
         m2 (double-array [5 4 3 2 7 6 5 4 3 2 0])
         k1 (- 11.0 (mod (asum [x xs const m1] (* x const)) 11))
         k2 (- 11.0 (mod (asum [x xs const m2] (* x const)) 11))
+        [n1 n2] (take-last 2 xs)]
+    (and (== n1 k1) (== n2 k2))))
+
+;; ~7.9 us (quick), ~7.5 us (long)
+(defn valid-pn-naive? [xs]
+  (let [m1 [3 7 6 1 8 9 4 5 2 0 0] ;; last two for identity
+        m2 [5 4 3 2 7 6 5 4 3 2 0]
+        check-fn (fn [ms]
+                   (- 11.0 (mod (apply + (map * ms xs)) 11)))
+        [k1 k2] (map check-fn [m1 m2])
         [n1 n2] (take-last 2 xs)]
     (and (== n1 k1) (== n2 k2))))
 
@@ -165,12 +178,18 @@
   (def profiled-stats (graph/eager-compile (graph/profiled ::profile-data stats-graph)))
 
   ;; Look ma, benchmarks!
-  @(::profile-data (profiled-stats {:xs my-array}))
+  (def a @(::profile-data (profiled-stats {:xs my-array})))
 
-  ;; => {:rqd-digamma 0.003694, :std 0.383838, :rqd 0.17283,
-  ;;    :dot-product 0.049673, :probs 4.732489}   
+  ;; =>
+  {:rqd-digamma 0.003694, :std 0.383838, :rqd 0.17283,
+   :dot-product 0.049673, :probs 4.732489}   
 
-  )
+   ;; and the total running time is . . .
+   (apply + (vals a))
+
+   ;; => ~5.3 ms.
+   
+   )
 
 ;; ## What does this tell us?
 ;;
