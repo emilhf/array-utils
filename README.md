@@ -9,7 +9,7 @@ Most of the functions require little or no manual type hinting, and
 most of them support binding semantics similar to for-each in
 imperative languages. (See `abind`).
 
-An experimental, decoupled version supporting both primitivelongs and
+An experimental, decoupled version supporting both primitive longs and
 doubles (and easily extented to support others) is found in
 `general.clj`.
 
