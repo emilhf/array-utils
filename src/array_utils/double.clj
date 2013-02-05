@@ -21,17 +21,20 @@
   [[f unit] bindings & body]
   `(reduce-with-hint [double doubles] [~f ~unit] ~bindings ~@body))
 
-(defmacro amap [bindings & body]
+(defmacro amap 
   "Builds a new array from evaluating the body at each step. See
-`abind-hint` for more information about the bindings."
+  `abind-hint` for more information about the bindings."
+  [bindings & body]
   `(amap-hint [double doubles] ~bindings ~@body))
 
-(defmacro doarr [bindings & body]
+(defmacro doarr 
   "Like doseq, but for arrays. See `abind-hint` on bindings."
+  [bindings & body]
   `(doarr-hint [double doubles] ~bindings ~@body))
 
-(defmacro afill! [bindings & body]
+(defmacro afill! 
   "Like `amap`, but with destructive mapping."
+  [bindings & body]
   `(afill-hint! [double doubles aset-double] ~bindings ~@body))
 
 (defn afilter
@@ -41,8 +44,8 @@
   ([pred array]
      (let [acc (transient [])]
        (doarr [a array]
-                     (when (pred a)
-                       (conj! acc a)))
+              (when (pred a)
+                (conj! acc a)))
        (double-array (persistent! acc))))
   ([pred array unit]
      (amap [a array] (if (pred a) a unit))))
@@ -58,7 +61,7 @@
   ([pred array unit]
      (amap [a array] (if (pred a) a unit))))
 
-(defn afilter
+(defn afilter!
   "Destructive `afilter`."
   [pred array unit]
   (afill! [a array] (if (pred a) a unit)))

@@ -5,7 +5,8 @@
   (:refer-clojure :exclude [amap])
   (:use array-utils.double
         plumbing.core) 
-  (:require [plumbing.graph :as graph]
+  (:require [array-utils.long :as l]
+            [plumbing.graph :as graph]
             [criterium.core :as bench])
   (import [org.apache.commons.math3.special Gamma])) 
 
@@ -71,15 +72,24 @@
 
 ;; ## Adding up time
 
-;; Do you hate adding up hours? Not anymore! ~370 us.
+;; Do you hate adding up hours? Not anymore! ~16 us.
 (defn sum-hours
   "Sums up 'metric' hours of time and returns the time."
   [hours]
-  (collect #(rem (+ %1 %2) 24.0) 0.0 hours))
+  (rem (asum hours) (double 24)))
 
 (comment
   (def hours (double-array (repeatedly 10e3 #(rand-int 24))))
-  (sum-hours hours)
+
+  (def hours (long-array (repeatedly 10e3 #(rand-int 24))))
+  
+  (defn sum-hours-long
+    "Sums up 'metric' hours of time and returns the time."
+    [hours]
+    (rem (l/asum hours) (long 24)))
+  
+  (sum-hours-long hours)
+  
   )
 
 ;; ------------------------
@@ -90,10 +100,10 @@
 (defn valid-personal-number?
   "Verifies a Norwegian personal number."
   [xs]
-  (let [m1 (double-array [3 7 6 1 8 9 4 5 2 0 0]) ;; last two for identity
-        m2 (double-array [5 4 3 2 7 6 5 4 3 2 0])
-        k1 (- 11.0 (mod (asum [x xs const m1] (* x const)) 11))
-        k2 (- 11.0 (mod (asum [x xs const m2] (* x const)) 11))
+  (let [m1 (long-array [3 7 6 1 8 9 4 5 2 0 0]) ;; last two for identity
+        m2 (long-array [5 4 3 2 7 6 5 4 3 2 0])
+        k1 (- 11 (mod (l/asum [x xs const m1] (* x const)) 11))
+        k2 (- 11 (mod (l/asum [x xs const m2] (* x const)) 11))
         [n1 n2] (take-last 2 xs)]
     (and (== n1 k1) (== n2 k2))))
 
