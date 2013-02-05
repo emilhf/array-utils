@@ -4,7 +4,9 @@
        ugly. Use with care."
       :author "EHF"}
   array-utils.core
-  (:refer-clojure :exclude [amap])) 
+  (:refer-clojure :exclude [amap])
+;;  (:require [criterium.core :as bench])
+  ) 
 
 (set! *unchecked-math* true)
 (set! *warn-on-reflection* true)
@@ -31,6 +33,21 @@
 ;; need the raw speed of Java primitives.
 
 ;; TODO? Decouple and allow for longs
+
+(defn hint-array
+  "Helper function to tag an array in a macro. To be used later if
+  decoupling the library from doubles."
+  ([obj]
+     (hint-array obj :double))
+  ([obj type]
+     (let [tag (case type
+                 :double "[D"
+                 :long "[J"
+                 :char "[C"
+                 :int "[I"
+                 :float "[F")]
+       (with-meta obj
+         {:tag tag}))))
 
 (defn double-hint
   "Helper function to tag a double array in a macro."
@@ -66,7 +83,7 @@
 
 ;; ## Iterators and higher-order functions
 
-(defmacro arrseq
+(defmacro doarr
   "Like doseq, but for arrays. See abind for how the bindings work."
   [bindings & body]
   (let [arr (double-hint (second bindings))]
@@ -74,47 +91,60 @@
        (abind ~bindings i# ~@body))))
 
 (defmacro amap
-  "Mimicks for-each.
+  "Mimicks for-each. See abind for information about the bindings.
 
-  Example usage: `(amap [a natural-numbers] (+ a 2)` is rewritten to
-  <pre><code>(core/amap natural-numbers idx ret
-  (let [a (get natural-numbers idx)]
-    (+ a 2)))</code></pre>"
+  Example usage: `(amap [a natural-numbers] (+ a 2)` returns a new
+  array with two added to each element in natural-numbers."
   [binding & body]
   (let [arr (double-hint (second binding))] ;; doubleize => 1000x perf
     `(clojure.core/amap ~arr i# ret#
                         (double (abind ~binding i# ~@body)))))
 
 (defmacro afill!
-  "Example usage: `(afill! [[j v] n] (+ j 2)` adds two to each element
+  "Example usage: `(afill! [[j v] n] (+ v 2)` adds two to each element
   in the array, doing in-place replacement. See abind for
   information on the bindings work."
   [bindings & body]
   (if (symbol? (first bindings))
     `(afill! [[i# ~(first bindings)] ~(last bindings)] ~@body)
-    `(arrseq ~bindings
+    `(doarr ~bindings
              (aset-double ~@((juxt last ffirst) bindings) ~@body))))
 
+(defn ajuxtmap 
+  "For each fn, apply fn to each element in the array. Example
+  usage: `((ajuxtmap inc dec) xs)` returns two copies of xs, with each
+  element incremented or decremented respectively."
+  [& fns]
+  (fn [xs]
+    (for [fn fns] (amap [x xs] (fn x)))))
+
 (defn afilter
-  "Returns an array with all items that match the predicate. Accepts
-  an optional unit element that is inserted when an element does not
-  match the predicate, which improves performance in a pinch."
+  "Returns a new array of all items matching the predicate.
+  Accepts an optional unit element that is inserted when an element
+  does not match the pred, which improves performance in a pinch."
   ([pred array]
      (let [acc (transient [])]
-       (arrseq [a array]
-               (when (pred a)
-                 (conj! acc a)))
+       (doarr [a array]
+              (when (pred a)
+                (conj! acc a)))
        (double-array (persistent! acc))))
   ([pred array unit]
      (amap [a array] (if (pred a) a unit))))
+
+(defn afilter!
+  "In-place afilter. Inserts `unit` when an element fails to meet the
+  predicate. For example, the unit (or identity) should be 0.0 when
+  you're filtering something that's going to get summed up."
+  [pred array unit]
+  (afill! [a array] (if (pred a) a unit)))
 
 (defn afilter2
   "Like afilter, but uses ArrayList instead of transient vectors."
   ([pred array]
      (let [^java.util.ArrayList acc (java.util.ArrayList.)]
-       (arrseq [a array]
-               (when (pred a)
-                 (.add acc a)))
+       (doarr [a array]
+              (when (pred a)
+                (.add acc a)))
        (double-array acc)))
   ([pred array unit]
      (amap [a array] (if (pred a) a unit))))
@@ -149,3 +179,9 @@
   [f unit xs]
   (reduce-with-monoid [f unit]
     [x xs] x))
+
+(defn amax [xs] (collect max Double/MIN_VALUE xs))
+
+(defn amin [xs] (collect min Double/MAX_VALUE xs))
+
+(defn amean [xs] (/ (asum xs) (alength ^doubles xs)))

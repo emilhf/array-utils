@@ -1,13 +1,15 @@
 # array-utils
 
-`array-utils` is inspired by Prismatic's slides on their
-yet-to-be-released Flop library. Do you need the raw speed of
-primitive Java doubles, but find them hard and inexpressive? Sick of
-reflection and type-hints? This is for you.
+`array-utils` is a small lib inspired by Prismatic's Flop. It offers
+more elegant ways to handle primitive arrays of doubles. Includes
+functional programmingstaples like `afilter` and `amap`, as well as
+in-place versions like `afill!` and `afilter!`. The functions require
+little or no manual type hinting, and most of them support binding
+semantics similar to for-each in imperative languages. (See `abind`).
 
-Includes higher-order functions like `amap`, `asum`, and `afill!`
-(in-place map). The functions require little or no manual type hinting
-and support binding semantics similar to for-each.
+**NB.** Please consider using built-in Clojure functions and data
+structures unless you need the raw speed of Java primitives. Please
+think of the children.
 
 ## Usage
 

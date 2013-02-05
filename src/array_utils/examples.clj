@@ -71,7 +71,7 @@
 
 ;; ## Adding up time
 
-;; Do you hate adding up hours? Not anymore! ~884 us.
+;; Do you hate adding up hours? Not anymore! ~370 us.
 (defn sum-hours
   "Sums up 'metric' hours of time and returns the time."
   [hours]
@@ -178,14 +178,14 @@
   (def profiled-stats (graph/eager-compile (graph/profiled ::profile-data stats-graph)))
 
   ;; Look ma, benchmarks!
-  (def a @(::profile-data (profiled-stats {:xs my-array})))
+  (def res @(::profile-data (profiled-stats {:xs my-array})))
 
   ;; =>
   {:rqd-digamma 0.003694, :std 0.383838, :rqd 0.17283,
    :dot-product 0.049673, :probs 4.732489}   
 
    ;; and the total running time is . . .
-   (apply + (vals a))
+   (apply + (vals res))
 
    ;; => ~5.3 ms.
    
