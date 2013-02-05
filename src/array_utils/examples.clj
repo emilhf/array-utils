@@ -3,7 +3,7 @@
       :author "EHF"}
   array-utils.examples
   (:refer-clojure :exclude [amap])
-  (:use array-utils.core
+  (:use array-utils.double
         plumbing.core) 
   (:require [plumbing.graph :as graph]
             [criterium.core :as bench])
