@@ -5,7 +5,7 @@
       :author "EHF"}
   array-utils.core
   (:refer-clojure :exclude [amap])
-;;  (:require [criterium.core :as bench])
+  (:require [criterium.core :as bench])
   ) 
 
 (set! *unchecked-math* true)
@@ -34,20 +34,8 @@
 
 ;; TODO? Decouple and allow for longs
 
-(defn hint-array
-  "Helper function to tag an array in a macro. To be used later if
-  decoupling the library from doubles."
-  ([obj]
-     (hint-array obj :double))
-  ([obj type]
-     (let [tag (case type
-                 :double "[D"
-                 :long "[J"
-                 :char "[C"
-                 :int "[I"
-                 :float "[F")]
-       (with-meta obj
-         {:tag tag}))))
+;; # Decoupled primitives. Only slightly slower, and can easily be
+;; # extended to longs.
 
 (defn double-hint
   "Helper function to tag a double array in a macro."
@@ -162,7 +150,7 @@
   ([array]
      `(aproduct [a# ~array] a#))
   ([bindings & body]
-     `(reduce-with-monoid [unchecked-multiply 1.0]
+     `(reduce-with-monoid [unchecked-multiply (double 1)]
         ~bindings ~@body)))
 
 (defmacro asum
@@ -170,7 +158,7 @@
   ([array]
      `(asum [a# ~array] a#))
   ([bindings & body]
-     `(reduce-with-monoid [unchecked-add 0.0]
+     `(reduce-with-monoid [unchecked-add (double 0)]
         ~bindings ~@body)))
 
 (defn collect

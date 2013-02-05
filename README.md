@@ -1,11 +1,17 @@
 # array-utils
 
 `array-utils` is a small lib inspired by Prismatic's Flop. It offers
-more elegant ways to handle primitive arrays of doubles. Includes
-functional programmingstaples like `afilter` and `amap`, as well as
-in-place versions like `afill!` and `afilter!`. The functions require
-little or no manual type hinting, and most of them support binding
-semantics similar to for-each in imperative languages. (See `abind`).
+more elegant ways to handle primitive arrays, primarily doubles.
+Includes functional programming staples like `afilter` and `amap`, as
+well as in-place versions like `afill!` and `afilter!`.
+
+Most of the functions require little or no manual type hinting, and
+most of them support binding semantics similar to for-each in
+imperative languages. (See `abind`).
+
+An experimental, decoupled version supporting both primitivelongs and
+doubles (and easily extented to support others) is found in
+`general.clj`.
 
 **NB.** Please consider using built-in Clojure functions and data
 structures unless you need the raw speed of Java primitives. Please
@@ -32,7 +38,7 @@ you can write
 (defn dot-product [ws xs] (asum [x xs w ws] (* x w)))
 ```
 
-See `src/array-utils/example.clj` for more.
+See `example.clj` for more.
 
 ## Documentation
 
