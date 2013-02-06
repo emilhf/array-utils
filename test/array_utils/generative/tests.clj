@@ -35,6 +35,8 @@
 
 ;; # Tests
 
+;; TODO: Write a cool test for filter!
+
 ;; ----------------------------------------------------------------------
 
 ;; ## Doubles
@@ -63,6 +65,30 @@
   d/amin
   [^{:tag (`darray 10e3)} a] 
   (assert (= (reduce min a) %)))
+
+(defspec afill!-replaces-doubles-in-place
+  (fn [xs]
+    (let [ys (double-array (alength xs))]
+      (d/afill! [[i y] ys]
+                (aget ^doubles xs i))
+      ys))
+  [^{:tag (`darray 10e3)} xs]
+  (assert (every? true? (map = xs %))))
+
+(defspec doarr-changes-doubles
+  (fn [xs]
+    (let [ys (double-array (alength xs))]
+      (d/doarr [[i y] ys x xs]
+                (aset-double ys i x))
+      ys))
+  [^{:tag (`darray 10e3)} xs]
+  (assert (every? true? (map = xs %))))
+
+(defspec collect-reduces-doubles
+  (fn [xs]
+     (d/collect + (double 0) xs))
+  [^{:tag (`darray 10e3)} xs]
+  (assert (== (reduce + xs) %)))
 
 ;; ----------------------------------------------------------------------
 
@@ -93,8 +119,30 @@
   [^{:tag (`larray 10e3)} a] 
   (assert (= (reduce min a) %)))
 
-;; TODO: write tests for afill!, doarr, collect
- 
+(defspec afill!-replaces-longs-in-place
+  (fn [xs]
+    (let [ys (long-array (alength xs))]
+      (l/afill! [[i y] ys]
+                (aget ^longs xs i))
+      ys))
+  [^{:tag (`larray 10e3)} xs]
+  (assert (every? true? (map = xs %))))
+
+(defspec doarr-changes-longs
+  (fn [xs]
+    (let [ys (long-array (alength xs))]
+      (l/doarr [[i y] ys x xs]
+                (aset-long ys i x))
+      ys))
+  [^{:tag (`larray 10e3)} xs]
+  (assert (every? true? (map = xs %))))
+
+(defspec collect-reduces-longs
+  (fn [xs]
+     (l/collect + (long 0) xs))
+  [^{:tag (`larray 10e3)} xs]
+  (assert (== (reduce + xs) %)))
+
 (defn -main []
   (runner/-main "."))
 
