@@ -8,6 +8,15 @@
 
 ;; # Utils and setup
 
+(defn ensure-directory [name]
+  (let [f (clojure.java.io/file name)]
+    (if-not (.isDirectory f)
+      (if (.isFile f)
+        (do (println "Please delete the file `benchmark`.")
+            (System/exit 0))
+        (.mkdir f))
+      (println name "exists. Nice!"))))
+
 ;; Very unsafe, but to hell with it!
 (defn gen-fname []
   (let [now (java.util.Date.)]
@@ -22,6 +31,8 @@
 ;; ----------------------------------------
 
 ;; # Benchmarking suite. Go wild!
+
+;; TODO: Add generative benchmarking using data.generators
 
 ;; TODO: Port over solutions from Alioth?
 
@@ -55,6 +66,7 @@
     ))
 
 (defn -main []
+  (ensure-directory "benchmarks")
   (println "Benchmarking. This might take a while.")
   (let [res (run-benchmarks)
         fname (gen-fname)]
