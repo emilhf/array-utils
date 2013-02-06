@@ -7,7 +7,7 @@ versions like `afill!` and `afilter!`.
 
 Most of the functions require little or no manual type hinting, and
 most of them support binding semantics similar to for-each in
-imperative languages. (See `abind-hint`).
+imperative languages. (See `core.clj/abind-hint`).
 
 `array-utils` now supports multiple array types, starting with doubles
 and longs. Feel free to make your own implementations using the
@@ -38,7 +38,7 @@ you can write
 (defn dot-product [ws xs] (asum [x xs w ws] (* x w)))
 ```
 
-See `example.clj` for more.
+See `examples.clj` for more.
 
 ## Documentation
 

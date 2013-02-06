@@ -4,25 +4,25 @@
   array-utils.examples
   (:refer-clojure :exclude [amap])
   (:use array-utils.double
-        plumbing.core) 
+        plumbing.core)
   (:require [array-utils.long :as l]
             [plumbing.graph :as graph]
             [criterium.core :as bench])
-  (import [org.apache.commons.math3.special Gamma])) 
+  (import [org.apache.commons.math3.special Gamma]))
 
 (set! *unchecked-math* true)
 (set! *warn-on-reflection* true)
 ;; enable on pain of (REPL) death
-(set! *print-length* 15) 
+(set! *print-length* 15)
 
 ;; # Examples
 
-;; ~47 us (quick), 51 us (long)
+;; ~18 us (quick), 18 us (long)
 (defn dot-product [ws xs]
   (asum [w ws x xs] (* w x)))
 
-;; ~6.83 ms (quick), 3.84 ms (long)
-(defn dot-product-naive [ws xs]
+;; ~2.1 ms (quick), 2.2 ms (long)
+(defn dot-product-boxed [ws xs]
   (apply + (map * xs ws)))
 
 ;; ------------------------
@@ -32,29 +32,30 @@
 (defn mean [xs]
   (/ (asum xs) (alength ^doubles xs)))
 
-;; Consider writing a one-pass version. ~370 us (quick), 384 us (long)
+;; Consider writing a one-pass version. ~29 us (quick), 23 us (long)
 (defn stddev
   "Calculates the standard deviation of xs."
   [xs]
   (let [s0 (alength ^doubles xs)
         s1 (asum xs)
-        s2 (asum [x xs] (Math/pow x 2))]
-    (/ (Math/sqrt (- (* s0 s2) (Math/pow s1 2))) s0)))
+        s2 (asum [x xs] (* x x))] ;; Math/pow has HUGE overhead ~ 200 us
+    (/ (Math/sqrt (- (* s0 s2) (* s1 s1))) s0)))
 
-;; ~1.03 ms (short), ~1.51 ms (long)
+;; ~900 ms (long)
 (defn stddev-boxed [xs]
   (let [s0 (count xs)
         s1 (apply + xs)
-        s2 (apply + (map #(Math/pow % 2) xs))]
-    (/ (Math/sqrt (- (* s0 s2) (Math/pow s1 2))) s0)))
+        s2 (apply + (map #(* % %) xs))]
+    (/ (Math/sqrt (- (* s0 s2) (* s1 s1))) s0)))
 
 ;; Hard to beat apache.commons, even with series expansion.
 (defn digamma [x] (Gamma/digamma x))
 
+;; usually takes ~1.0-5.5 ms.
 (defn exp-log-probs [alphas]
   (let [log-z (digamma (asum alphas))]
-   (amap [a alphas]
-         (- (digamma a) log-z))))
+    (amap [a alphas]
+          (- (digamma a) log-z))))
 
 ;; Look ma, in-place!
 (defn exp-log-probs! [alphas]
@@ -82,14 +83,14 @@
   (def hours (double-array (repeatedly 10e3 #(rand-int 24))))
 
   (def hours (long-array (repeatedly 10e3 #(rand-int 24))))
-  
+
   (defn sum-hours-long
     "Sums up 'metric' hours of time and returns the time."
     [hours]
     (rem (l/asum hours) (long 24)))
-  
+
   (sum-hours-long hours)
-  
+
   )
 
 ;; ------------------------
@@ -125,31 +126,31 @@
 ;; fracture in a rock mass. It is used in the rock mass rating (RMR)
 ;; to give a rough measure of the characteristics of the rock.
 
-;; 6.6 ms. Slow, but probably fast enough. Can we do better?
+;; 2.5 ms. Slow, but probably fast enough. Can we do better?
 (defn RQD-boxed [xs core-diameter]
   (let [ys (filter (partial < (* 2 core-diameter)) xs)]
     (* 100 (/ (apply + ys) (apply + xs)))))
 
-;;  3.5 ms
+;;  1.9 ms
 (defn RQD-array
   [xs core-diameter]
   (let [ys (afilter (partial < (* 2 core-diameter)) xs)]
     (* 100.0 (/ (asum ys) (asum xs)))))
 
-;; ~910 us. Getting better. The major bottleneck turns out to be
+;; ~220 us. Getting better. The major bottleneck turns out to be
 ;; `partial`, which is really slow for some reason.
 (defn RQD-afilter
   [xs core-diameter]
   (let [^double ys (afilter2 #(< (* 2.0 core-diameter) %) xs 0.0)]
     (* 100.0 (/ (asum ys) (asum xs)))))
 
-;; Can we go faster? Sure. 229 us.
+;; Can we go faster? Sure. 76 us.
 (defn RQD-fast
   [xs core-diameter]
   (let [ys (amap [x xs] (if (< (* 2.0 core-diameter) x) x 0.0))]
     (* 100.0 (/ (asum ys) (asum xs)))))
 
-;; Even faster. 160 us.
+;; Even faster. 38 us.
 (defn RQD
   [xs core-diameter]
   (let [ys-sum (asum [x xs] (if (< (* 2.0 core-diameter) x) x 0.0))]
@@ -166,9 +167,9 @@
 ;; interesting. Or at least wacky and somewhat complex.
 
 (comment
-  
+
   (def my-array (double-array (repeatedly 10e3 rand)))
-  
+
   (def stats-graph
     {:rqd  (fnk [xs] (RQD xs 0.04))
      :probs  (fnk [xs] (exp-log-probs xs))
@@ -176,11 +177,11 @@
      :rqd-digamma (fnk [rqd] (digamma rqd))
      :ass (fnk [xs] (asum [x xs] x))
      :dot-product  (fnk [xs probs] (dot-product xs probs))})
-  
+
   (def stats-eager (graph/eager-compile stats-graph))
 
   (stats-eager {:xs my-array})
-  
+
   ;; => {:rqd-digamma 4.593293092502177, :std 0.2894233837513104, :rqd
   ;;    99.31889445432603, :dot-product -51499.834485766805, :probs
   ;;    #<double[] [D@1cb8313>}
@@ -192,14 +193,14 @@
 
   ;; =>
   {:rqd-digamma 0.003694, :std 0.383838, :rqd 0.17283,
-   :dot-product 0.049673, :probs 4.732489}   
+   :dot-product 0.049673, :probs 4.732489}
 
-   ;; and the total running time is . . .
-   (apply + (vals res))
+  ;; and the total running time is . . .
+  (apply + (vals res))
 
-   ;; => ~5.3 ms.
-   
-   )
+  ;; => ~5.3 ms.
+
+  )
 
 ;; ## What does this tell us?
 ;;

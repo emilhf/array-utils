@@ -19,8 +19,8 @@
 
 (defmacro abind-hint
   "Given bindings of the form [[idx var] array], binds `idx` to the
-  current index and `var` to the value at that index. Given only `[var
-  array]`, binds `var` to the value at that index."
+  current index and `var` to the value at that index. Given only
+  `[var array]`, binds `var` to the value at that index."
   [[sg pl] bindings i & body]
   `(let ~(reduce
           (fn [init [name arr]]
@@ -31,10 +31,9 @@
           [] (partition 2 bindings))
      ~@body))
 
-
 (defmacro reduce-with-hint
   [[sg pl] [f unit] bindings & body]
-  (let [arr `(~pl ~(second bindings))] ;; manual type hints = 1000x perf
+  (let [arr `(~pl ~(second bindings))] ;; => 1000x perf
     `(areduce ~arr i# ret# ~unit
               (~f ret#
                   (abind-hint [~sg ~pl] ~bindings i# ~@body)))))
@@ -47,7 +46,7 @@
 
 (defmacro amap-hint
   [[sg pl] binding & body]
-  (let [arr `(~pl ~(second binding))] ;; doubleize => 1000x perf
+  (let [arr `(~pl ~(second binding))] 
     `(clojure.core/amap ~arr i# ret#
                         (~sg (abind-hint [~sg ~pl] ~binding i# ~@body)))))
 
