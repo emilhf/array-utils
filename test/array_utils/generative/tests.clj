@@ -72,6 +72,13 @@
   [^{:tag (`darray 10e3)} xs]
   (assert (every? true? (map = xs %))))
 
+(defspec afill-bounded!-replaces-double-interval
+  (fn [xs]
+    (d/afill-bounded! [1 4] [x xs] 2)
+    xs)
+  [^{:tag (`darray 10e3)} xs]
+  (assert (every? true? (map == [2.0 2.0 2.0] (take 3 (rest xs))))))
+
 (defspec double-doarr-has-side-effects
   (fn [xs]
     (let [ys (double-array (alength xs))]
@@ -133,6 +140,13 @@
       old-xs))
   [^{:tag (`larray 10e3)} xs]
   (assert (every? true? (map = xs %))))
+
+(defspec afill-bounded!-replaces-long-interval
+  (fn [xs]
+    (l/afill-bounded! [1 4] [x xs] 2)
+    xs)
+  [^{:tag (`larray 10e3)} xs]
+  (assert (every? true? (map == [2 2 2] (take 3 (rest xs))))))
 
 (defspec long-doarr-has-side-effects
   (fn [xs]
