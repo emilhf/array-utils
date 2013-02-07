@@ -44,17 +44,41 @@
     `(dotimes [i# (alength ~arr)]
        (abind-hint [~sg ~pl] ~bindings i# ~@body))))
 
+;; for doing ops on a subset of an array
+(defmacro doarr-bound-hint
+  [[sg pl] [start stop] bindings & body]
+  (let [arr `(~pl ~(second bindings))]
+    `(loop [i# (int ~start)]
+       (when-not (== ~stop i#)
+         (abind-hint [~sg ~pl] ~bindings i# ~@body)
+         (recur (unchecked-inc-int i#))))))
+
 (defmacro amap-hint
   [[sg pl] binding & body]
   (let [arr `(~pl ~(second binding))] 
     `(clojure.core/amap ~arr i# ret#
                         (~sg (abind-hint [~sg ~pl] ~binding i# ~@body)))))
 
+;; Don't ask.
+
 (defmacro afill-hint!
   [[sg pl set-fn] bindings & body]
   (if (symbol? (first bindings))
     `(afill-hint! [~sg ~pl ~set-fn]
-                  [[i# ~(first bindings)] ~(last bindings)] ~@body)
+                  [[i# ~(first bindings)] ~(second bindings)
+                   ~@(drop 2 bindings)] ~@body)
     `(doarr-hint [~sg ~pl]
                  ~bindings
-                 (~set-fn ~@((juxt last ffirst) bindings) ~@body))))
+                 (~set-fn ~@((juxt second ffirst) bindings) ~@body))))
+
+(defmacro afill-bound-hint!
+  [[sg pl set-fn] [start stop] bindings & body]
+  (if (symbol? (first bindings))
+    `(afill-bound-hint! [~sg ~pl ~set-fn]
+                        [~start ~stop]
+                        [[i# ~(first bindings)] ~(second bindings)
+                         ~@(drop 2 bindings)] ~@body)
+    `(doarr-bound-hint [~sg ~pl]
+                       [~start ~stop]
+                       ~bindings
+                       (~set-fn ~@((juxt second ffirst) bindings) ~@body))))

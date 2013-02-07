@@ -25,8 +25,16 @@
 (defmacro doarr [bindings & body]
   `(doarr-hint [long longs] ~bindings ~@body))
 
+(defmacro doarr-bounded
+  [[start stop] bindings & body]
+  `(doarr-bound-hint [long longs] [~start ~stop] ~bindings ~@body))
+
 (defmacro afill! [bindings & body]
   `(afill-hint! [long longs aset-long] ~bindings ~@body))
+
+(defmacro afill-bounded! 
+  [[start stop] bindings & body]
+  `(afill-bound-hint! [long longs aset-long] [~start ~stop] ~bindings ~@body))
 
 (defn afilter
   ([pred array]

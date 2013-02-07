@@ -29,13 +29,24 @@
 
 (defmacro doarr 
   "Like doseq, but for arrays. See `abind-hint` on bindings."
-  [bindings & body]
-  `(doarr-hint [double doubles] ~bindings ~@body))
+  ([bindings & body]
+     `(doarr-hint [double doubles] ~bindings ~@body)))
+
+(defmacro doarr-bounded
+  "Like `doarr`, but on a subset of the array"
+  [[start stop] bindings & body]
+  `(doarr-bound-hint [double doubles] [~start ~stop] ~bindings ~@body))
 
 (defmacro afill! 
-  "Like `amap`, but with destructive mapping."
+  "Like `amap`, but with destructive mapping on the first array in the
+  bindings (for sanity reasons)."
   [bindings & body]
   `(afill-hint! [double doubles aset-double] ~bindings ~@body))
+
+(defmacro afill-bounded! 
+  "Like `afill!`, but over a subset of the array."
+  [[start stop] bindings & body]
+  `(afill-bound-hint! [double doubles aset-double] [~start ~stop] ~bindings ~@body))
 
 (defn afilter
   "Like filter, but for arrays. Given a unit element, inserts it when

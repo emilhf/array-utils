@@ -1,4 +1,5 @@
 (ns array-utils.generative.tests
+  (:use array-utils.generators)
   (:require [clojure.test.generative :as test :refer (defspec)]
             [clojure.data.generators :as gen]
             [clojure.test.generative.event :as event] ;; UI console
@@ -19,19 +20,6 @@
 (defn dot-product-long [ws xs] (l/asum [w ws x xs] (* w x)))
 
 (defn dot-product-double [ws xs] (d/asum [w ws x xs] (* w x)))
-
-;; # Generators
-
-(defn darray
-  ([] (darray 10e3))
-  ([size]
-      (gen/double-array gen/double size)))
-
-(defn larray
-  ([] (larray 10))
-  ([size] (larray size 0 10e3))
-  ([size hi lo]
-     (gen/long-array (gen/uniform hi lo) size)))
 
 ;; # Tests
 
@@ -75,18 +63,18 @@
   [^{:tag (`darray 10e3)} xs]
   (assert (every? true? (map = xs %))))
 
-(defspec doarr-changes-doubles
+(defspec double-doarr-has-side-effects
   (fn [xs]
     (let [ys (double-array (alength xs))]
       (d/doarr [[i y] ys x xs]
-                (aset-double ys i x))
+               (aset-double ys i x))
       ys))
   [^{:tag (`darray 10e3)} xs]
   (assert (every? true? (map = xs %))))
 
 (defspec collect-reduces-doubles
   (fn [xs]
-     (d/collect + (double 0) xs))
+    (d/collect + (double 0) xs))
   [^{:tag (`darray 10e3)} xs]
   (assert (== (reduce + xs) %)))
 
@@ -128,18 +116,18 @@
   [^{:tag (`larray 10e3)} xs]
   (assert (every? true? (map = xs %))))
 
-(defspec doarr-changes-longs
+(defspec long-doarr-has-side-effects
   (fn [xs]
     (let [ys (long-array (alength xs))]
       (l/doarr [[i y] ys x xs]
-                (aset-long ys i x))
+               (aset-long ys i x))
       ys))
   [^{:tag (`larray 10e3)} xs]
   (assert (every? true? (map = xs %))))
 
 (defspec collect-reduces-longs
   (fn [xs]
-     (l/collect + (long 0) xs))
+    (l/collect + (long 0) xs))
   [^{:tag (`larray 10e3)} xs]
   (assert (== (reduce + xs) %)))
 
