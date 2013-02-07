@@ -63,6 +63,15 @@
   [^{:tag (`darray 10e3)} xs]
   (assert (every? true? (map = xs %))))
 
+(defspec afill!-only-mutates-the-first-darray
+  (fn [xs]
+    (let [old-xs (aclone xs)
+          ys (double-array (alength xs))]
+      (d/afill! [[i y] ys b xs] b)
+      old-xs))
+  [^{:tag (`darray 10e3)} xs]
+  (assert (every? true? (map = xs %))))
+
 (defspec double-doarr-has-side-effects
   (fn [xs]
     (let [ys (double-array (alength xs))]
@@ -113,6 +122,15 @@
       (l/afill! [[i y] ys]
                 (aget ^longs xs i))
       ys))
+  [^{:tag (`larray 10e3)} xs]
+  (assert (every? true? (map = xs %))))
+
+(defspec afill!-only-mutates-the-first-larray
+  (fn [xs]
+    (let [old-xs (aclone xs)
+          ys (long-array (alength xs))]
+      (l/afill! [[i y] ys b xs] b)
+      old-xs))
   [^{:tag (`larray 10e3)} xs]
   (assert (every? true? (map = xs %))))
 
